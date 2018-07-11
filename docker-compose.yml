@@ -1,0 +1,22 @@
+version: "3.2"
+
+services:
+  frontend:
+    build: ./vue_app
+    ports:
+      - 8081:8081
+    volumes:
+      - type: bind
+        source: ./vue_app
+        target: /var/www/flask-vue-template/vue_app
+
+  backend:
+    build:
+      context: ./flask_app
+      dockerfile: Dockerfile_dev
+    ports:
+      - 8080:8080
+    volumes:
+      - type: bind
+        source: ./flask_app
+        target: /var/www/flask-vue-template/flask_app

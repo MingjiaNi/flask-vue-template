@@ -1,0 +1,33 @@
+FROM python:3.6
+
+WORKDIR /var/www/flask-vue-template
+COPY flask_app/ flask_app
+COPY vue_app/ vue_app
+
+RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -
+RUN apt-get update
+RUN apt-get install -y nodejs
+RUN npm install --prefix vue_app
+RUN npm run build --prefix vue_app
+
+# install resources
+RUN apt-get update && apt-get install -y nginx supervisor
+RUN pip install -r ./flask_app/requirements.txt
+
+# set up config files
+RUN rm -r /root/.cache
+COPY flask_app/config/nginx.conf /etc/nginx/
+COPY flask_app/config/flask-site-nginx.conf /etc/nginx/conf.d
+COPY flask_app/config/uwsgi.ini /etc/uwsgi/
+COPY flask_app/config/supervisord.conf /etc/supervisord.conf
+
+# add user
+RUN groupadd nginx
+RUN useradd -g nginx nginx
+
+# set environment variables
+ENV PYTHONPATH=$PYTHONPATH:`pwd`
+
+# run
+WORKDIR /var/www/flask-vue-template/flask_app
+CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisord.conf"]
